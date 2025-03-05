@@ -19,7 +19,11 @@ async function bootstrap() {
 		const httpAdapterHost = app.get(HttpAdapterHost)
 
 		app.setGlobalPrefix(`api/v${VERSION}`)
-		app.enableCors()
+		app.enableCors({
+			origin: ['http://localhost:3000'],
+			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+			credentials: true
+		})
 		app.useGlobalPipes(new ValidationPipe({ transform: true }))
 		app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost))
 
