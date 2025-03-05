@@ -20,7 +20,7 @@ async function bootstrap() {
 
 		app.setGlobalPrefix(`api/v${VERSION}`)
 		app.enableCors({
-			origin: ['http://localhost:3000'],
+			origin: ['https://polywallet.vercel.app'],
 			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
 			credentials: true
 		})
