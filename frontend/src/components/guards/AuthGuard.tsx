@@ -21,6 +21,7 @@ export default function AuthGuard({ children }: GuardProps) {
 
 	useEffect(() => {
 		if (!isAuthenticated && isRoutePrivate(pathname)) {
+			console.error('[AuthGuard]: User is not authenticated, redirecting to login...')
 			router.push(PublicRoutes.HOME)
 		}
 	}, [isAuthenticated, pathname, router])

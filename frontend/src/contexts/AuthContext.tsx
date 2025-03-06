@@ -7,20 +7,29 @@ import { useCookies } from 'react-cookie'
 import { useAccount } from 'wagmi'
 
 type AuthContextType = {
-	isAuthenticated: boolean
+	isAuthenticated: boolean | null
 	token: string | null
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+type AuthProviderProps = {
+	children: React.ReactNode
+	initialCookies?: Record<string, string>
+}
+
+export function AuthProvider({ children, initialCookies }: AuthProviderProps) {
 	const { isConnected, isReconnecting } = useAccount()
 	const [isValidToken, setIsValidToken] = useState(false)
 	const [cookies, , removeCookie] = useCookies(Object.values(AppCookies))
-	const authToken = cookies[AppCookies.AUTH_TOKEN] || null
-	const [isAuthenticated, setIsAuthenticated] = useState(isConnected && isValidToken && authToken)
+	const [authToken, setAuthToken] = useState(() => initialCookies?.[AppCookies.AUTH_TOKEN] || cookies[AppCookies.AUTH_TOKEN] || null)
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
 	const validateSession = useCallback(async () => {
+		if (!authToken) {
+			setIsValidToken(false)
+			return
+		}
 		try {
 			const res = await api.verifyToken(authToken)
 			setIsValidToken(res.valid)
@@ -30,10 +39,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, [authToken])
 
 	useEffect(() => {
-		if (!isAuthenticated) {
+		if (cookies[AppCookies.AUTH_TOKEN] && cookies[AppCookies.AUTH_TOKEN] !== authToken) {
+			setAuthToken(cookies[AppCookies.AUTH_TOKEN])
+		}
+	}, [cookies, authToken])
+
+	useEffect(() => {
+		if (authToken) {
 			validateSession()
 		}
-	}, [isAuthenticated, validateSession])
+	}, [authToken, validateSession])
 
 	useEffect(() => {
 		// Remove all cookies if the user disconnects their wallet
@@ -43,12 +58,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					removeCookie(cookieKey, { path: '/' })
 				}
 			})
+			setIsAuthenticated(false)
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect when the user disconnects their wallet
 	}, [isConnected, isReconnecting])
 
 	useEffect(() => {
-		setIsAuthenticated(isConnected && isValidToken)
+		if (isValidToken !== null) {
+			setIsAuthenticated(isConnected && isValidToken)
+		}
 	}, [isConnected, isValidToken])
 
 	const value = useMemo(

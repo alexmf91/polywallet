@@ -13,14 +13,19 @@ import { AuthProvider } from '@app/contexts'
 import { queryClient } from '@app/lib/react-query'
 import { config } from '@app/lib/wagmi'
 
-function AppProviders({ children }: { children: React.ReactNode }) {
+type ProvidersProps = {
+	children: React.ReactNode
+	cookies: Record<string, string>
+}
+
+function AppProviders({ children, cookies }: ProvidersProps) {
 	const { theme } = useTheme()
 
 	return (
 		<WagmiProvider config={config}>
 			<QueryClientProvider client={queryClient}>
 				<ConnectKitProvider mode={theme === 'dark' ? 'dark' : 'light'}>
-					<AuthProvider>
+					<AuthProvider initialCookies={cookies}>
 						<Toaster position="bottom-right" />
 						<AuthGuard>{children}</AuthGuard>
 					</AuthProvider>
@@ -30,11 +35,11 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 	)
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, cookies }: ProvidersProps) {
 	return (
 		<ThemeProvider attribute="class">
 			<ErrorBoundary>
-				<AppProviders>{children}</AppProviders>
+				<AppProviders cookies={cookies}>{children}</AppProviders>
 			</ErrorBoundary>
 		</ThemeProvider>
 	)
