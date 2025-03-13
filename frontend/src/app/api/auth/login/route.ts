@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { env } from '@app/lib/env'
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
 
 	if (!loginRes.ok) return NextResponse.json(data)
 
+	const cookiesStore = await cookies()
 	const cookiesConfig = {
 		httpOnly: process.env.NODE_ENV === 'production',
 		secure: process.env.NODE_ENV === 'production',
@@ -26,10 +28,8 @@ export async function POST(req: Request) {
 		expires: new Date(Date.now() + COOKIE_EXPIRATION_MS)
 	}
 
-	const response = NextResponse.json({ success: true })
+	cookiesStore.set(AppCookies.AUTH_TOKEN, data.token, cookiesConfig)
+	cookiesStore.set(AppCookies.WALLET_ADDRESS, walletAddress, cookiesConfig)
 
-	response.cookies.set(AppCookies.AUTH_TOKEN, data.token, cookiesConfig)
-	response.cookies.set(AppCookies.WALLET_ADDRESS, walletAddress, cookiesConfig)
-
-	return response
+	return NextResponse.json({ walletAddress, token: data.token })
 }

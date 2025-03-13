@@ -8,14 +8,16 @@ import { useAccount, useSignMessage } from 'wagmi'
 
 import { Button, Input, Label } from '@app/components/ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@app/components/ui/card'
+import { useAuth } from '@app/contexts'
 import { api } from '@app/lib/api'
 import { PrivateRoutes } from '@app/lib/routes'
-import { ApiErrors } from '@app/lib/types'
+import { ApiErrors, AppCookies } from '@app/lib/types'
 
 export default function SignUpPage() {
 	const router = useRouter()
 	const { address, isConnected } = useAccount()
 	const { signMessageAsync } = useSignMessage()
+	const { setCookies } = useAuth()
 	const [walletAddress, setWalletAddress] = useState('')
 	const [username, setUsername] = useState('')
 
@@ -37,8 +39,11 @@ export default function SignUpPage() {
 
 				const registerRes = await api.registerUser(wallet, user, signature)
 
-				if (registerRes.success) {
-					router.push(PrivateRoutes.DASHBOARD)
+				if (registerRes.token) {
+					setCookies(AppCookies.AUTH_TOKEN, registerRes.token)
+					setCookies(AppCookies.WALLET_ADDRESS, registerRes.walletAddress)
+					setCookies(AppCookies.USERNAME, registerRes.username)
+					setTimeout(() => router.push(PrivateRoutes.DASHBOARD), 2000)
 					return { success: true, error: '' }
 				} else {
 					return {

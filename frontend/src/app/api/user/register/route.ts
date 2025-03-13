@@ -1,6 +1,8 @@
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
 import { env } from '@app/lib/env'
 import { AppCookies } from '@app/lib/types'
-import { NextResponse } from 'next/server'
 
 const COOKIE_EXPIRATION_MS = 60 * 60 * 1000 // 1 hour in milliseconds
 
@@ -17,6 +19,7 @@ export async function POST(req: Request) {
 
 	if (!registerRes.ok) return NextResponse.json(data)
 
+	const cookiesStore = await cookies()
 	const cookiesConfig = {
 		httpOnly: process.env.NODE_ENV === 'production',
 		secure: process.env.NODE_ENV === 'production',
@@ -25,11 +28,9 @@ export async function POST(req: Request) {
 		expires: new Date(Date.now() + COOKIE_EXPIRATION_MS)
 	}
 
-	const response = NextResponse.json({ success: true })
+	cookiesStore.set(AppCookies.AUTH_TOKEN, data.token, cookiesConfig)
+	cookiesStore.set(AppCookies.WALLET_ADDRESS, walletAddress, cookiesConfig)
+	cookiesStore.set(AppCookies.USERNAME, username, cookiesConfig)
 
-	response.cookies.set(AppCookies.AUTH_TOKEN, data.token, cookiesConfig)
-	response.cookies.set(AppCookies.WALLET_ADDRESS, walletAddress, cookiesConfig)
-	response.cookies.set(AppCookies.USERNAME, walletAddress, cookiesConfig)
-
-	return response
+	return NextResponse.json({ walletAddress, username, token: data.token })
 }

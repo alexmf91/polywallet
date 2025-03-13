@@ -27,7 +27,9 @@ export default async function RootLayout({
 	children: React.ReactNode
 }>) {
 	const cookieStore = await cookies()
-	const serverCookies = Object.fromEntries(cookieStore.getAll().map(({ name, value }) => [name, value]))
+	const serverCookies = Object.fromEntries(
+		cookieStore.getAll().map(({ name, value }) => [name, value])
+	)
 
 	return (
 		<html lang="en">
